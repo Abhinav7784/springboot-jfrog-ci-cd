@@ -1,0 +1,39 @@
+name: Spring Boot CI/CD - JFrog
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      - name: Login to JFrog Artifactory
+        run: |
+          echo "${{ secrets.JFROG_TOKEN }}" | docker login \
+          ${{ secrets.JFROG_URL }} \
+          -u ${{ secrets.JFROG_USERNAME }} \
+          --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t \
+          ${{ secrets.JFROG_URL }}/docker-local/springboot-jfrog-ci-cd:latest .
+
+      - name: Push Docker Image
+        run: |
+          docker push \
+          ${{ secrets.JFROG_URL }}/docker-local/springboot-jfrog-ci-cd:latest
