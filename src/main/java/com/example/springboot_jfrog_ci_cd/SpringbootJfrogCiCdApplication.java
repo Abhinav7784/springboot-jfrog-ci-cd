@@ -24,6 +24,11 @@ public class SpringbootJfrogCiCdApplication {
 		return "Spring Boot CI/CD with JFrog Artifactorygit  Test Check";
 	}
 
+	@GetMapping("/dockertest")
+	public String testCheckDocker() {
+		return "Spring Boot CI/CD with JFrog Artifactorygit  Test Check Docker";
+	}
+
 //	git init
 //	git add README.md
 //	git commit -m "first commit"
