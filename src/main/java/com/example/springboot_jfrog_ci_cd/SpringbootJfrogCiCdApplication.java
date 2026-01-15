@@ -11,7 +11,12 @@ public class SpringbootJfrogCiCdApplication {
 
 	@GetMapping("/health")
 	public String health() {
-		return "Spring Boot CI/CD with JFrog Artifactory 🚀";
+		return "Spring Boot CI/CD with JFrog Artifactory ";
+	}
+
+	@GetMapping("/test")
+	public String test() {
+		return "Spring Boot CI/CD with JFrog Artifactorygit  Test";
 	}
 
 //	git init
