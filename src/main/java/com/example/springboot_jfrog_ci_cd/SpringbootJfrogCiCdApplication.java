@@ -19,6 +19,11 @@ public class SpringbootJfrogCiCdApplication {
 		return "Spring Boot CI/CD with JFrog Artifactorygit  Test";
 	}
 
+	@GetMapping("/testcheck")
+	public String testCheck() {
+		return "Spring Boot CI/CD with JFrog Artifactorygit  Test Check";
+	}
+
 //	git init
 //	git add README.md
 //	git commit -m "first commit"
