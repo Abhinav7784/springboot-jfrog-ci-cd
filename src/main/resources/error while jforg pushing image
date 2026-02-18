@@ -1,0 +1,216 @@
+Great idea 👍 — this will help **a LOT of people**.
+Below is a **clean, blog-ready summary** of the **real errors you faced**, **why they happen**, and **how to avoid them**.
+
+You_sr journey is **exactly what beginners and even experienced devs hit** when using **JFrog + GitHub Actions**.
+
+---
+
+# 🚨 Common JFrog + GitHub Actions Docker Errors (And How to Avoid Them)
+
+> A practical guide to avoid hours of debugging when pushing Docker images to JFrog Artifactory.
+
+---
+
+## ❌ Error #1: `Wrong username was used`
+
+### 🔴 Error Message
+
+```
+unknown: Wrong username was used
+```
+
+### ❌ Root Cause
+
+Using **email ID** instead of **JFrog username** during Docker login.
+
+JFrog Docker registry **does not always accept email IDs**.
+
+### ✅ Correct Fix
+
+Use **JFrog username**, found in:
+
+```
+JFrog UI → Profile → Username
+```
+
+### ✅ Correct Login
+
+```bash
+docker login <domain>.jfrog.io
+Username: jfrog_username
+Password: access_token
+```
+
+---
+
+## ❌ Error #2: `invalid reference format`
+
+### 🔴 Error Message
+
+```
+invalid tag "***/docker-local/springboot:latest": invalid reference format
+```
+
+### ❌ Root Cause
+
+Incorrect Docker image tag due to **wrong JFrog URL** or **secret masking**.
+
+Most common mistake:
+
+```
+https://trialoan6sj.jfrog.io
+```
+
+Docker expects:
+
+```
+trialoan6sj.jfrog.io
+```
+
+### ✅ Correct JFrog URL
+
+```
+trialoan6sj.jfrog.io
+```
+
+✔ No `https://`
+✔ No `/artifactory`
+✔ No `/api/docker`
+
+---
+
+## ❌ Error #3: Using Artifactory API URL for Docker Login
+
+### 🔴 Wrong Value
+
+```
+https://<domain>.jfrog.io/artifactory/api/docker/docker-local
+```
+
+### ❌ Why This Fails
+
+Docker **does not authenticate via REST APIs**.
+
+Docker only communicates with:
+
+```
+https://<domain>.jfrog.io/v2/
+```
+
+### ✅ Correct Registry Host
+
+```
+<domain>.jfrog.io
+```
+
+---
+
+## ❌ Error #4: Multiline `docker build -t \` Breaks in GitHub Actions
+
+### 🔴 Problematic YAML
+
+```yaml
+docker build -t \
+${{ secrets.JFROG_URL }}/docker-local/app:latest .
+```
+
+### ❌ Why It Breaks
+
+* Line breaks + secret masking
+* Produces invalid image names (`***`)
+
+### ✅ Best Practice Fix
+
+Use shell variable:
+
+```yaml
+IMAGE_NAME=${{ secrets.JFROG_URL }}/docker-local/app:latest
+docker build -t $IMAGE_NAME .
+```
+
+---
+
+## ❌ Error #5: JFROG_URL Secret Masked as `***`
+
+### 🔴 Log Output
+
+```
+IMAGE_NAME=***/docker-local/app:latest
+```
+
+### ❌ Root Cause
+
+Secret contains invalid characters or URL format.
+
+### ✅ Correct Secret Value
+
+```
+JFROG_URL=trialoan6sj.jfrog.io
+```
+
+Delete and re-add the secret if needed.
+
+---
+
+## ❌ Error #6: `unauthorized: authentication required`
+
+### 🔴 Root Cause
+
+* Used JFrog password instead of **Access Token**
+* Token expired or revoked
+
+### ✅ Fix
+
+Generate token:
+
+```
+Profile → Security → Access Tokens
+```
+
+Use token as Docker password.
+
+---
+
+## ✅ Final Golden Rules (Save This)
+
+| Rule         | Always Remember                 |
+| ------------ | ------------------------------- |
+| JFrog URL    | `<domain>.jfrog.io`             |
+| Username     | JFrog username ≠ email          |
+| Password     | Access Token only               |
+| Repo Type    | Docker → Local                  |
+| Image Format | `<domain>/<repo>/<image>:<tag>` |
+| Never use    | `/artifactory/api/docker`       |
+
+---
+
+## 🏁 Example of Correct Setup
+
+```bash
+docker login trialoan6sj.jfrog.io
+docker build -t trialoan6sj.jfrog.io/docker-local/springboot-app:latest .
+docker push trialoan6sj.jfrog.io/docker-local/springboot-app:latest
+```
+
+---
+
+## 🚀 Conclusion
+
+> Most JFrog Docker issues are **not configuration bugs**,
+> but **URL, username, and token misunderstandings**.
+
+Once these are fixed:
+✔ GitHub Actions works
+✔ Docker push succeeds
+✔ Artifacts appear in JFrog
+
+---
+
+If you want, I can:
+
+* Rewrite this as a **Medium article**
+* Add **diagrams**
+* Convert to **LinkedIn post**
+* Turn it into a **checklist PDF**
+
+Just tell me 👍

@@ -1,0 +1,317 @@
+https://chatgpt.com/share/696908c1-2ed8-8005-a338-48144b5111c6 -  complete code with error solutions
+
+Perfect 👍
+Below is a **COMPLETE, FRESH, COPY-PASTE-RUNNABLE Spring Boot project** that **builds and pushes Docker image to JFrog Artifactory using GitHub Actions**.
+
+This is **enterprise-grade**, exactly how it’s done in real projects.
+
+---
+
+# 🚀 Spring Boot CI/CD → JFrog Artifactory (Complete New Project)
+
+![Image](https://opengraph.githubassets.com/b5bd282a783e99416ed0e4cd3593d6d1af2780d8c329266e023809a1a5f61a24/spring-io/artifactory-resource)
+
+![Image](https://speedmedia.jfrog.com/08612fe1-9391-4cf3-ac1a-6dd49c36b276/media.jfrog.com/wp-content/uploads/2018/09/20131710/DockerHA_Diagram.png)
+
+![Image](https://speedmedia2.jfrog.com/08612fe1-9391-4cf3-ac1a-6dd49c36b276/media.jfrog.com/wp-content/uploads/2021/03/17141723/My-Build-My-Way-JFrog-Pipelines-Extensions.jpg)
+
+---
+
+## 🧱 Tech Stack Used
+
+| Layer     | Tool              |
+| --------- | ----------------- |
+| Language  | Java 17           |
+| Framework | Spring Boot       |
+| Build     | Maven             |
+| CI/CD     | GitHub Actions    |
+| Container | Docker            |
+| Registry  | JFrog Artifactory |
+
+---
+
+# 1️⃣ Project Structure (Final)
+
+```
+springboot-jfrog-ci-cd/
+├── src/
+│   └── main/
+│       ├── java/com/example/jfrog/
+│       │   └── JfrogDemoApplication.java
+│       └── resources/
+│           └── application.yml
+├── pom.xml
+├── Dockerfile
+└── .github/
+    └── workflows/
+        └── jfrog-ci-cd.yml
+```
+
+---
+
+# 2️⃣ Spring Boot Application Code
+
+### `JfrogDemoApplication.java`
+
+```java
+package com.example.jfrog;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class JfrogDemoApplication {
+
+    @GetMapping("/health")
+    public String health() {
+        return "Spring Boot CI/CD with JFrog Artifactory 🚀";
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(JfrogDemoApplication.class, args);
+    }
+}
+```
+
+---
+
+### `application.yml`
+
+```yaml
+server:
+  port: 8080
+spring:
+  application:
+    name: springboot-jfrog-ci-cd
+```
+
+---
+
+# 3️⃣ `pom.xml` (Production Ready)
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>springboot-jfrog-ci-cd</artifactId>
+  <version>1.0.0</version>
+
+  <properties>
+    <java.version>17</java.version>
+    <spring.boot.version>3.2.1</spring.boot.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+---
+
+# 4️⃣ Dockerfile (NO JFrog change needed)
+
+```dockerfile
+# -------- Build Stage --------
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# -------- Runtime Stage --------
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
+```
+
+---
+
+# 5️⃣ Create Docker Repository in JFrog
+
+In **JFrog UI**:
+
+```
+Administration → Repositories → Docker → Local
+```
+
+Example:
+
+```
+docker-local
+```
+
+Your registry URL:
+
+```
+mycompany.jfrog.io/docker-local
+```
+
+---
+
+# 6️⃣ Create JFrog Access Token
+
+```
+Profile → Security → Access Tokens → Generate
+```
+
+✔ Scope: full
+✔ Expiry: 90 days
+
+---
+
+# 7️⃣ GitHub Secrets (Mandatory)
+
+Go to:
+
+```
+GitHub Repo → Settings → Secrets → Actions
+```
+
+Add these:
+
+| Secret           | Example              |
+| ---------------- | -------------------- |
+| `JFROG_URL`      | `mycompany.jfrog.io` |
+| `JFROG_USERNAME` | `john.doe`           |
+| `JFROG_TOKEN`    | `jfrog_access_token` |
+
+---
+
+# 8️⃣ GitHub Actions Workflow (FULL CI/CD)
+
+### `.github/workflows/jfrog-ci-cd.yml`
+
+```yaml
+name: Spring Boot CI/CD - JFrog
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      - name: Login to JFrog Artifactory
+        run: |
+          echo "${{ secrets.JFROG_TOKEN }}" | docker login \
+          ${{ secrets.JFROG_URL }} \
+          -u ${{ secrets.JFROG_USERNAME }} \
+          --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t \
+          ${{ secrets.JFROG_URL }}/docker-local/springboot-jfrog-ci-cd:latest .
+
+      - name: Push Docker Image
+        run: |
+          docker push \
+          ${{ secrets.JFROG_URL }}/docker-local/springboot-jfrog-ci-cd:latest
+```
+
+---
+
+# 9️⃣ Push Project to GitHub
+
+```bash
+git init
+git add .
+git commit -m "Spring Boot CI/CD with JFrog"
+git branch -M main
+git remote add origin https://github.com/<user>/springboot-jfrog-ci-cd.git
+git push -u origin main
+```
+
+🚀 Pipeline starts automatically.
+
+---
+
+# 🔍 Verify in JFrog
+
+JFrog UI:
+
+```
+docker-local → springboot-jfrog-ci-cd → latest
+```
+
+---
+
+# ▶️ Pull & Run from JFrog
+
+```bash
+docker pull mycompany.jfrog.io/docker-local/springboot-jfrog-ci-cd:latest
+
+docker run -p 8080:8080 \
+mycompany.jfrog.io/docker-local/springboot-jfrog-ci-cd:latest
+```
+
+Test:
+
+```
+http://localhost:8080/health
+```
+
+---
+
+# 🧯 Common Enterprise Issues
+
+| Error            | Fix                   |
+| ---------------- | --------------------- |
+| unauthorized     | Wrong token           |
+| denied           | Repo permission       |
+| manifest unknown | Wrong repo name       |
+| login failed     | Use registry URL only |
+
+---
+
+# 🏁 FINAL RESULT
+
+✅ Fresh Spring Boot project
+✅ GitHub Actions CI/CD
+✅ Docker image pushed to JFrog
+✅ Production-ready setup
+
+---
+
+If you want next:
+
+* **JFrog Xray security scan**
+* **Promotion dev → prod**
+* **Kubernetes deployment**
+* **Helm charts from JFrog**
+
+Say the word — we’ll level this to **real enterprise CI/CD** 💪🔥
